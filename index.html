@@ -1,0 +1,160 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ashen Arena</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&display=swap">
+<style>
+/* Layout: one centred 16:9 stage with controls and a move list beneath it. Single dark look by design. */
+:root {
+  --bg: #0d171b; --panel: #15242a; --line: #2b4048; --fg: #e6efe9; --mute: #93a8a8;
+  --accent: #f2c230; --red: #d6403a; --blue: #3a8fd0;
+  --display: "Bebas Neue", Impact, sans-serif; --ui: "Rajdhani", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--ui); font-size: 16px; line-height: 1.4;
+  padding-block: 12px 28px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 40px; letter-spacing: .04em; margin: 0; line-height: 1; }
+.sub { color: var(--mute); font-size: 15px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.stage { position: relative; aspect-ratio: 16 / 9; width: 100%; background: #000; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+canvas { display: block; width: 100%; height: 100%; }
+.overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  background: rgba(8, 12, 16, .82); text-align: center; padding: 12px; }
+.overlay[hidden] { display: none; }
+.overlay h2 { font-family: var(--display); font-weight: 400; font-size: clamp(34px, 8vw, 72px); letter-spacing: .05em; margin: 0; color: var(--accent); line-height: 1; }
+.overlay p { margin: 0; color: var(--mute); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.btn { background: var(--accent); color: #1a1405; border: 0; border-radius: 3px; padding: 9px 20px; font-weight: 700; font-size: 17px; letter-spacing: .03em; }
+.btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+.btn:hover { filter: brightness(1.1); }
+.btn:focus-visible, .pill:focus-visible, .pad button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.pill { background: transparent; border: 1px solid var(--line); color: var(--mute); padding: 5px 14px; border-radius: 3px; font-weight: 600; }
+.pill[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.pause-btn { position: absolute; top: 6px; right: 50%; transform: translateX(50%); opacity: .0; }
+.touch { display: none; justify-content: space-between; align-items: center; gap: 16px; user-select: none; -webkit-user-select: none; touch-action: none; }
+@media (pointer: coarse), (max-width: 700px) { body:not([data-touch="off"]) .touch { display: flex; } }
+body[data-touch="on"] .touch { display: flex; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.pill.small { padding: 3px 10px; font-size: 14px; }
+.pad { display: grid; grid-template-columns: repeat(3, 52px); gap: 5px; }
+.act { display: grid; grid-template-columns: repeat(2, 58px); gap: 6px; }
+.touch button { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; height: 52px; font-weight: 700; font-size: 20px; color: var(--fg); touch-action: none; }
+.touch button.on { background: var(--accent); color: #1a1405; }
+.touch .act button { height: 58px; border-radius: 29px; }
+.touch .act .thr { font-size: 15px; color: var(--mute); }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; color: var(--mute); font-size: 14px; }
+.guide { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 12px 16px; }
+.guide summary { cursor: pointer; font-weight: 700; font-size: 18px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 12px; }
+.cols > div { min-width: 0; }
+h3 { margin: 0 0 6px; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+td { padding: 3px 6px 3px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+td:first-child { white-space: nowrap; font-weight: 700; }
+.h { color: #ff9b6a; } .m { color: #ffd23f; } .l { color: #6fd0ff; }
+ul { margin: 0; padding-left: 18px; } li { margin: 2px 0; }
+kbd { background: #0d171b; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<main class="wrap">
+  <header class="top">
+    <div class="brand">
+      <button class="pill small" id="b-touch" aria-pressed="false" title="Show or hide the on-screen touch controls">Touch controls</button>
+      <h1>Ashen Arena</h1>
+    </div>
+    <span class="sub">Four limbs. High, mid and low. Launch, juggle, throw.</span>
+  </header>
+
+  <div class="stage">
+    <canvas id="c" aria-label="Fighting game arena"></canvas>
+    <div class="overlay" id="menu">
+      <h2>Ashen Arena</h2>
+      <p>Best of three rounds. Hold back to block.</p>
+      <div class="row" role="group" aria-label="CPU difficulty">
+        <button class="pill" data-lvl="0" aria-pressed="false">Easy</button>
+        <button class="pill" data-lvl="1" aria-pressed="true">Normal</button>
+        <button class="pill" data-lvl="2" aria-pressed="false">Hard</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="b-cpu">Fight the CPU</button>
+        <button class="btn ghost" id="b-2p">2 Players</button>
+        <button class="btn ghost" id="b-train">Training</button>
+      </div>
+    </div>
+    <div class="overlay" id="pause" hidden>
+      <h2>Paused</h2>
+      <div class="row"><button class="btn" id="b-resume">Resume</button><button class="btn ghost" id="b-menu">Main menu</button></div>
+    </div>
+    <div class="overlay" id="end" hidden style="background: rgba(8,12,16,.62); justify-content: flex-end; padding-bottom: 7%;">
+      <p id="endtxt" style="color: var(--fg); font-weight: 700; font-size: 20px;"></p>
+      <div class="row"><button class="btn" id="b-rematch">Rematch</button><button class="btn ghost" id="b-menu2">Main menu</button></div>
+    </div>
+  </div>
+
+  <div class="tools"><button class="pill" id="b-pause">Pause (Esc)</button><span>Training overlay with hitboxes: <kbd>T</kbd></span></div>
+
+  <section class="touch" aria-label="Touch controls">
+    <div class="pad">
+      <button data-k="u+l">↖</button><button data-k="u">↑</button><button data-k="u+r">↗</button>
+      <button data-k="l">←</button><span></span><button data-k="r">→</button>
+      <button data-k="d+l">↙</button><button data-k="d">↓</button><button data-k="d+r">↘</button>
+    </div>
+    <div class="act">
+      <button data-k="lp">1</button><button data-k="rp">2</button>
+      <button data-k="lk">3</button><button data-k="rk">4</button>
+      <button class="thr" data-k="lp+lk">1+3</button><button class="thr" data-k="rp+rk">2+4</button>
+    </div>
+  </section>
+
+  <details class="guide" open>
+    <summary>Controls and move list</summary>
+    <div class="cols">
+      <div>
+        <h3>Controls</h3>
+        <table>
+          <tr><td>Player 1</td><td><kbd>A</kbd> <kbd>D</kbd> move · <kbd>W</kbd> jump · <kbd>S</kbd> crouch</td></tr>
+          <tr><td></td><td><kbd>U</kbd> left punch (1) · <kbd>I</kbd> right punch (2)<br><kbd>J</kbd> left kick (3) · <kbd>K</kbd> right kick (4)</td></tr>
+          <tr><td>Player 2</td><td>Arrow keys · <kbd>O</kbd> 1 · <kbd>P</kbd> 2 · <kbd>L</kbd> 3 · <kbd>;</kbd> 4</td></tr>
+          <tr><td>vs CPU</td><td>Arrow keys and the 1P keys both work.</td></tr>
+        </table>
+        <h3 style="margin-top:14px">Rules of the ring</h3>
+        <ul>
+          <li><span class="h">High</span> moves whiff against a crouch.</li>
+          <li><span class="m">Mid</span> moves beat a crouching guard; block them standing.</li>
+          <li><span class="l">Low</span> moves must be blocked crouching (down + back).</li>
+          <li>Hold back to block. Tap forward twice to dash, back twice to backstep.</li>
+          <li>Throws (1+3 or 2+4) beat blocks. Press the matching 1 or 2 fast to break.</li>
+          <li>A hit while your opponent is mid-attack is a counter hit: more damage, more stun.</li>
+          <li>Below 25% health you enter Rage and hit harder.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Moves (facing right)</h3>
+        <table>
+          <tr><td>1, 2</td><td><span class="h">High</span> jab and straight. <b>1,2,3</b> ends in a <span class="m">mid</span> kick.</td></tr>
+          <tr><td>3, 4</td><td><span class="m">Mid</span> kick, then a <span class="h">high</span> kick. <b>4</b> alone is a slow roundhouse.</td></tr>
+          <tr><td>→ + 2</td><td><span class="m">Mid</span> hook that steps in.</td></tr>
+          <tr><td>→ + 3</td><td><span class="m">Mid</span> thrust kick, longest poke.</td></tr>
+          <tr><td>↘ + 1</td><td>Fast <span class="m">mid</span> jab.</td></tr>
+          <tr><td>↘ + 2</td><td><b>Launcher.</b> Juggle with 1, 2, 1,2 while they are airborne.</td></tr>
+          <tr><td>↓ + 1 / 3</td><td><span class="l">Low</span> jab and low kick.</td></tr>
+          <tr><td>↓ + 2</td><td><span class="m">Mid</span> crouch hook.</td></tr>
+          <tr><td>↓ + 4</td><td><span class="l">Low</span> sweep. Knocks down.</td></tr>
+          <tr><td>↑ then 3 / 4</td><td><span class="m">Mid</span> air kicks.</td></tr>
+          <tr><td>1+3 / 2+4</td><td>Shoulder throw / suplex.</td></tr>
+        </table>
+      </div>
+    </div>
+  </details>
+</main>
+
+
+
+
+
+<script src="app.js"></script>
+
+</body></html>
